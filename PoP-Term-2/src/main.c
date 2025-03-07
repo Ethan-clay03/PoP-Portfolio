@@ -1,137 +1,111 @@
 #include "raylib.h"
 #include <stdio.h>
+#include <string.h>
+#include "connect4.c"
 
-#define ROWS 6
-#define COLUMNS 7
-#define CELL_SIZE 64
+// Variables for main menu
+bool showMainMenu = true;
+bool showNameScreen = false;
+char player1Name[64] = "";
+char player2Name[64] = "";
+bool enterPlayer1Name = true;
 
-enum Cell {
-    EMPTY,    // 0 = Empty cell
-    PLAYER1,  // 1 = Player 1
-    PLAYER2   // 2 = Player 2
-};
+void validateGameNames() {
+    if (strlen(player1Name) == 0) {
+        strcpy(player1Name, "Player 1");
+    }
+    if (strlen(player2Name) == 0) {
+        strcpy(player2Name, "Player 2");
+    }
+}
 
-enum Cell board[ROWS][COLUMNS] = { { EMPTY } };  // Set all cells to empty
+bool IsMouseOverButton(Rectangle button) {
+    Vector2 mousePoint = GetMousePosition();
+    return CheckCollisionPointRec(mousePoint, button);
+}
 
-enum Cell current_player = PLAYER1;  // Start with Player 1
-bool game_won = false;               // Has game been won?
-char win_message[64] = "";           // Win message
+void HandlePlayerNameInput() {
+    int key = GetKeyPressed();
+    char* currentPlayerName = enterPlayer1Name ? player1Name : player2Name;
+    if (key >= 32 && key <= 126) {
+        int len = strlen(currentPlayerName);
+        if (len < 63) {
+            currentPlayerName[len] = (char)key;
+            currentPlayerName[len + 1] = '\0';
+        }
+    }
+    if (IsKeyPressed(KEY_ENTER)) {
+        //Set flag to false to show player 2
+        if (enterPlayer1Name) {
+            enterPlayer1Name = false;
+        //Second enter is player 2, show game screen
+        } else {
+            showNameScreen = false;
+        }
+    }
+    if (IsKeyPressed(KEY_BACKSPACE)) {
+        int len = strlen(currentPlayerName);
+        if (len > 0) {
+            currentPlayerName[len - 1] = '\0';
+        }
+    }
+}
 
-void draw_board();
-bool check_win(enum Cell player);
+void ShowMainMenu(Rectangle startButton, Rectangle nameButton) {
+    DrawText("Connect 4 Game", 100, 100, 20, BLACK);
+    if (IsMouseOverButton(startButton)) {
+        DrawRectangleRec(startButton, LIGHTGRAY);
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            showMainMenu = false;
+        }
+    } else {
+        DrawRectangleRec(startButton, GRAY);
+    }
+    DrawText("Start Game (without names)", 110, 160, 20, BLACK);
+    if (IsMouseOverButton(nameButton)) {
+        DrawRectangleRec(nameButton, LIGHTGRAY);
+        if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            showMainMenu = false;
+            showNameScreen = true;
+        }
+    } else {
+        DrawRectangleRec(nameButton, GRAY);
+    }
+    DrawText("Start Game (name selection)", 110, 210, 20, BLACK);
+}
+
+void ShowNameScreen() {
+    DrawText("Enter Player Names", 100, 100, 20, BLACK);
+    if (enterPlayer1Name) {
+        DrawText("Enter Player 1 Name:", 100, 150, 20, BLACK);
+        DrawText(player1Name, 350, 150, 20, BLACK);
+    } else {
+        DrawText("Enter Player 2 Name:", 100, 150, 20, BLACK);
+        DrawText(player2Name, 350, 150, 20, BLACK);
+    }
+    HandlePlayerNameInput();
+}
 
 int main(void) {
-    InitWindow(COLUMNS * CELL_SIZE, ROWS * CELL_SIZE + 50, "Connect 4");
+    InitWindow(COLUMNS * CELL_SIZE, ROWS * CELL_SIZE + 100, "Connect 4");
+
+    Rectangle startButton = { 100, 150, 325, 40 };
+    Rectangle nameButton = { 100, 200, 325, 40 };
 
     while (!WindowShouldClose()) {
-        if (!game_won && IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
-            int column = GetMouseX() / CELL_SIZE;  // Get the column based on X co-ordinate
-            // Check bottom to top to find next available free space
-            for (int row = ROWS - 1; row >= 0; row--) {
-                if (board[row][column] == EMPTY) {
-                    // Place the piece for the current player when free space found
-                    board[row][column] = current_player;
-
-                    // Check if move wins the game
-                    if (check_win(current_player)) {
-                        game_won = true; 
-                        sprintf(win_message, "Player %d Wins!", current_player);  // Winner message
-                    }
-
-                    // Switching player
-                    current_player = (current_player == PLAYER1) ? PLAYER2 : PLAYER1;
-                    break;  
-                }
-            }
-        }
-
         BeginDrawing();
-        ClearBackground(RAYWHITE); 
-
-        draw_board();  // Re-draw board
-        if (game_won) {
-            DrawText(win_message, 10, ROWS * CELL_SIZE + 10, 20, BLACK);  //Winner message
+        ClearBackground(RAYWHITE);
+        if (showMainMenu) {
+            ShowMainMenu(startButton, nameButton);
+        } else if (showNameScreen) {
+            ShowNameScreen();
+        } else {
+            validateGameNames();
+            gameStart();
         }
-
         EndDrawing();
     }
 
     CloseWindow();
     return 0;
-}
-
-
-void draw_board() {
-    // Go through entire board drawing circles
-    for (int row = 0; row < ROWS; row++) {
-        for (int col = 0; col < COLUMNS; col++) {
-            Color cell_color;
-
-            // Draw 
-            if (board[row][col] == PLAYER1) {
-                cell_color = RED;
-            }
-            else if (board[row][col] == PLAYER2) {
-                cell_color = YELLOW;
-            }
-            else {
-                cell_color = LIGHTGRAY;
-            }
-
-            // Draw circle (raylib method)
-            DrawCircle(col * CELL_SIZE + CELL_SIZE / 2, row * CELL_SIZE + CELL_SIZE / 2, CELL_SIZE / 2 - 5, cell_color);
-        }
-    }
-}
-
-bool check_win(enum Cell player) {
-    // Horizontal
-    for (int row = 0; row < ROWS; row++) {
-        for (int col = 0; col < COLUMNS - 3; col++) {
-            if (board[row][col] == player &&
-                board[row][col + 1] == player &&
-                board[row][col + 2] == player &&
-                board[row][col + 3] == player) {
-                return true;
-            }
-        }
-    }
-
-    // Vertical
-    for (int row = 0; row < ROWS - 3; row++) {
-        for (int col = 0; col < COLUMNS; col++) {
-            if (board[row][col] == player &&
-                board[row + 1][col] == player &&
-                board[row + 2][col] == player &&
-                board[row + 3][col] == player) {
-                return true;
-            }
-        }
-    }
-
-    // Top Left bottom right
-    for (int row = 0; row < ROWS - 3; row++) {
-        for (int col = 0; col < COLUMNS - 3; col++) {
-            if (board[row][col] == player &&
-                board[row + 1][col + 1] == player &&
-                board[row + 2][col + 2] == player &&
-                board[row + 3][col + 3] == player) {
-                return true;
-            }
-        }
-    }
-
-    // Top-right to bottom left
-    for (int row = 3; row < ROWS; row++) {
-        for (int col = 0; col < COLUMNS - 3; col++) {
-            if (board[row][col] == player &&
-                board[row - 1][col + 1] == player &&
-                board[row - 2][col + 2] == player &&
-                board[row - 3][col + 3] == player) {
-                return true;
-            }
-        }
-    }
-
-    return false;
 }
