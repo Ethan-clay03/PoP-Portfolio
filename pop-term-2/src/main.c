@@ -51,7 +51,7 @@ void HandlePlayerNameInput() {
             showNameScreen = false;
         }
     }
-    //Remove last character from the string
+    //Remove last character from the string by adding null terminator
     if (IsKeyPressed(KEY_BACKSPACE)) {
         int len = strlen(currentPlayerName);
         if (len > 0) {
