@@ -67,7 +67,6 @@ void ShowMainMenu() {
 
     DrawText("Connect 4 Game", 100, 100, 20, BLACK);
 
-    DrawText("Start Game (without names)", 110, 160, 20, BLACK);
     if (IsMouseOverButton(startButton)) {
         //Draw new rectangle different colour to give hover affect
         DrawRectangleRec(startButton, LIGHTGRAY);
@@ -90,6 +89,7 @@ void ShowMainMenu() {
     } else {
         DrawRectangleRec(nameButton, GRAY);
     }
+    DrawText("Start Game (without names)", 110, 160, 20, BLACK);
     DrawText("Start Game (name selection)", 110, 210, 20, BLACK);
 }
 
