@@ -10,6 +10,7 @@ char player1Name[64] = "";
 char player2Name[64] = "";
 bool enterPlayer1Name = true;
 
+// Function to check if user has entered a custom name, if not, set default name
 void validateGameNames() {
     if (strlen(player1Name) == 0) {
         strcpy(player1Name, "Player 1");
@@ -19,6 +20,7 @@ void validateGameNames() {
     }
 }
 
+// Function to check if mouse is over a button
 bool IsMouseOverButton(Rectangle button) {
     Vector2 mousePoint = GetMousePosition();
     return CheckCollisionPointRec(mousePoint, button);

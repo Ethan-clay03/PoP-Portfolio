@@ -14,10 +14,12 @@ enum Cell board[ROWS][COLUMNS] = { { EMPTY } };
 enum Cell current_player = PLAYER1;
 bool game_won = false;
 char win_message[64] = "";
+
+//Access player names from main.c
 extern char player1Name[64];
 extern char player2Name[64];
 
-
+//Falling disc animation struct
 typedef struct {
     bool active;
     int col;
